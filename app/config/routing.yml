@@ -1,0 +1,5 @@
+kendoctor_documentor:
+    resource: "@KendoctorDocumentorBundle/Controller/"
+    type:     annotation
+    prefix:   /
+

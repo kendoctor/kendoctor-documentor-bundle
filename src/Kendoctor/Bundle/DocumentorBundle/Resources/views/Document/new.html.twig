@@ -1,0 +1,24 @@
+{% extends 'KendoctorDocumentorBundle:Space:spaceLayout.html.twig' %}
+
+{% block body -%}
+<h1>Document creation</h1>
+
+<form action="{{ path('document_create') }}" method="post" {{ form_enctype(form) }}>
+        {{ form_row(form.category)}} 
+        <!-- 
+        <p class="tree">
+            {{ tree | raw }}
+                <button  class="btn btn-mini">Select Category</button>
+            </p>
+        -->
+        {{ form_rest(form) }}
+            <p>
+                <button type="submit" class="btn btn-primary">Save and start editing</button>
+            </p>
+        </form>
+
+
+        <script>
+
+        </script>
+{% endblock %}

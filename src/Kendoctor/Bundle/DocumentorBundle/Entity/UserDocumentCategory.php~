@@ -1,0 +1,26 @@
+<?php
+
+namespace Kendoctor\Bundle\DocumentorBundle\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+use Kendoctor\Bundle\DocumentorBundle\Entity\Category;
+
+/**
+ * UserDocumentCategory
+ *
+ * @ORM\Table()
+ * @ORM\Entity
+ */
+class UserDocumentCategory extends Category
+{
+   
+    
+     /**
+     * @ORM\OneToMany(targetEntity="Document", mappedBy="category")
+     * 
+     * @var type
+     */
+    private $documents;
+
+  
+}

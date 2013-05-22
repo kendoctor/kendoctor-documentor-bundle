@@ -1,0 +1,30 @@
+{% extends 'KendoctorDocumentorBundle:Space:spaceLayout.html.twig' %}
+
+
+{% block body -%}
+<h1>UserDocumentCategory creation</h1>
+
+<form action="{{ path('userdocumentcategory_create') }}" method="post" {{ form_enctype(form) }}>
+        {{ form_widget(form) }}
+        <p>
+            <button type="submit">Create</button>
+        </p>
+    </form>
+
+    <ul class="record_actions">
+        <li>
+            <a href="{{ path('userdocumentcategory') }}">
+                Back to the list
+            </a>
+        </li>
+    </ul>
+
+    <ul>
+        <li>
+            <a href="/page/PHP">PHP</a>
+            <ul>
+                <li><a href="/page/SYMFONY1">SYMFONY1</a></li>
+            </ul>
+        </li>
+    </ul>
+{% endblock %}

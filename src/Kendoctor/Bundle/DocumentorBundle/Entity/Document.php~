@@ -1,0 +1,22 @@
+<?php
+
+namespace Kendoctor\Bundle\DocumentorBundle\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+use Kendoctor\Bundle\DocumentorBundle\Entity\Content;
+
+/**
+ * Document
+ *
+ * @ORM\Table()
+ * @ORM\Entity
+ */
+class Document extends Content
+{
+
+    /**
+     *@ORM\ManyToOne(targetEntity="UserDocumentCategory", inversedBy="documents")
+     * @var type 
+     */
+    private $category;
+}

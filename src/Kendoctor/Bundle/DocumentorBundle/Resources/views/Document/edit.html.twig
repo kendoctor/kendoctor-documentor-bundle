@@ -1,0 +1,29 @@
+{% extends 'KendoctorDocumentorBundle:Space:spaceLayout.html.twig' %}
+
+{% block body -%}
+    <h1>Document edit</h1>
+
+    <form class="document-form" action="{{ path('document_update', { 'id': entity.id }) }}" method="post" {{ form_enctype(edit_form) }}>
+        <input type="hidden" name="_method" value="PUT" />
+        {{ form_widget(edit_form) }}
+        <div id="doc"></div>
+        <p>
+            <button type="submit" class="btn">Save Document</button>
+            <button type="submit" class="btn btn-primary">Save And Publish</button>
+            <button type="submit" class="btn btn-danger">Delete</button>
+           
+        </p>
+    </form>
+
+        <script>
+            $(function() {
+
+                $("#doc").kendocumentor({
+                    titleFieldSelector: '#kendoctor_bundle_documentorbundle_documenttype_title',
+                    bodyFieldSelector: '#kendoctor_bundle_documentorbundle_documenttype_body',
+                    formSelector: '.document-form'
+                });
+            });
+            </script>
+            
+{% endblock %}
