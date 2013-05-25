@@ -5,7 +5,6 @@ namespace Kendoctor\Bundle\DocumentorBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 
-
 /**
  * Category
  * @Gedmo\Tree(type="nested")
@@ -16,8 +15,8 @@ use Gedmo\Mapping\Annotation as Gedmo;
  * @ORM\DiscriminatorMap({"Category"="Category", "DocumentCategory"="DocumentCategory", "UserDocumentCategory"="UserDocumentCategory", "BookCategory"="BookCategory", "UserBookCategory"="UserBookCategory" })
  * @ORM\Entity(repositoryClass="Gedmo\Tree\Entity\Repository\NestedTreeRepository")
  */
-class Category
-{
+class Category {
+
     /**
      * @var integer
      *
@@ -34,7 +33,6 @@ class Category
      */
     private $name;
 
-
     /**
      * @var datetime $createdAt
      *
@@ -50,8 +48,7 @@ class Category
      * @ORM\Column(type="datetime")
      */
     private $updatedAt;
-    
-    
+
     /**
      * @Gedmo\TreeLeft
      * @ORM\Column(name="lft", type="integer")
@@ -88,15 +85,31 @@ class Category
      * @ORM\OrderBy({"lft" = "ASC"})
      */
     private $children;
-    
-    
+
+    /**
+     * @var string $createdBy
+     *
+     * @Gedmo\Blameable(on="create")
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumn(name="created_by", referencedColumnName="id")
+     */
+    private $createdBy;
+
+    /**
+     * @var string $updatedBy
+     *
+     * @Gedmo\Blameable(on="update")
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumn(name="updated_by", referencedColumnName="id")
+     */
+    private $updatedBy;
+
     /**
      * Get id
      *
      * @return integer 
      */
-    public function getId()
-    {
+    public function getId() {
         return $this->id;
     }
 
@@ -106,10 +119,9 @@ class Category
      * @param string $name
      * @return Category
      */
-    public function setName($name)
-    {
+    public function setName($name) {
         $this->name = $name;
-    
+
         return $this;
     }
 
@@ -118,8 +130,7 @@ class Category
      *
      * @return string 
      */
-    public function getName()
-    {
+    public function getName() {
         return $this->name;
     }
 
@@ -129,10 +140,9 @@ class Category
      * @param \DateTime $createdAt
      * @return Category
      */
-    public function setCreatedAt($createdAt)
-    {
+    public function setCreatedAt($createdAt) {
         $this->createdAt = $createdAt;
-    
+
         return $this;
     }
 
@@ -141,8 +151,7 @@ class Category
      *
      * @return \DateTime 
      */
-    public function getCreatedAt()
-    {
+    public function getCreatedAt() {
         return $this->createdAt;
     }
 
@@ -152,10 +161,9 @@ class Category
      * @param \DateTime $updatedAt
      * @return Category
      */
-    public function setUpdatedAt($updatedAt)
-    {
+    public function setUpdatedAt($updatedAt) {
         $this->updatedAt = $updatedAt;
-    
+
         return $this;
     }
 
@@ -164,28 +172,26 @@ class Category
      *
      * @return \DateTime 
      */
-    public function getUpdatedAt()
-    {
+    public function getUpdatedAt() {
         return $this->updatedAt;
     }
+
     /**
      * Constructor
      */
-    public function __construct()
-    {
+    public function __construct() {
         $this->children = new \Doctrine\Common\Collections\ArrayCollection();
     }
-    
+
     /**
      * Set lft
      *
      * @param integer $lft
      * @return Category
      */
-    public function setLft($lft)
-    {
+    public function setLft($lft) {
         $this->lft = $lft;
-    
+
         return $this;
     }
 
@@ -194,8 +200,7 @@ class Category
      *
      * @return integer 
      */
-    public function getLft()
-    {
+    public function getLft() {
         return $this->lft;
     }
 
@@ -205,10 +210,9 @@ class Category
      * @param integer $lvl
      * @return Category
      */
-    public function setLvl($lvl)
-    {
+    public function setLvl($lvl) {
         $this->lvl = $lvl;
-    
+
         return $this;
     }
 
@@ -217,8 +221,7 @@ class Category
      *
      * @return integer 
      */
-    public function getLvl()
-    {
+    public function getLvl() {
         return $this->lvl;
     }
 
@@ -228,10 +231,9 @@ class Category
      * @param integer $rgt
      * @return Category
      */
-    public function setRgt($rgt)
-    {
+    public function setRgt($rgt) {
         $this->rgt = $rgt;
-    
+
         return $this;
     }
 
@@ -240,8 +242,7 @@ class Category
      *
      * @return integer 
      */
-    public function getRgt()
-    {
+    public function getRgt() {
         return $this->rgt;
     }
 
@@ -251,10 +252,9 @@ class Category
      * @param integer $root
      * @return Category
      */
-    public function setRoot($root)
-    {
+    public function setRoot($root) {
         $this->root = $root;
-    
+
         return $this;
     }
 
@@ -263,8 +263,7 @@ class Category
      *
      * @return integer 
      */
-    public function getRoot()
-    {
+    public function getRoot() {
         return $this->root;
     }
 
@@ -274,10 +273,9 @@ class Category
      * @param \Kendoctor\Bundle\DocumentorBundle\Entity\Category $parent
      * @return Category
      */
-    public function setParent(\Kendoctor\Bundle\DocumentorBundle\Entity\Category $parent = null)
-    {
+    public function setParent(\Kendoctor\Bundle\DocumentorBundle\Entity\Category $parent = null) {
         $this->parent = $parent;
-    
+
         return $this;
     }
 
@@ -286,8 +284,7 @@ class Category
      *
      * @return \Kendoctor\Bundle\DocumentorBundle\Entity\Category 
      */
-    public function getParent()
-    {
+    public function getParent() {
         return $this->parent;
     }
 
@@ -297,10 +294,9 @@ class Category
      * @param \Kendoctor\Bundle\DocumentorBundle\Entity\Category $children
      * @return Category
      */
-    public function addChildren(\Kendoctor\Bundle\DocumentorBundle\Entity\Category $children)
-    {
+    public function addChildren(\Kendoctor\Bundle\DocumentorBundle\Entity\Category $children) {
         $this->children[] = $children;
-    
+
         return $this;
     }
 
@@ -309,8 +305,7 @@ class Category
      *
      * @param \Kendoctor\Bundle\DocumentorBundle\Entity\Category $children
      */
-    public function removeChildren(\Kendoctor\Bundle\DocumentorBundle\Entity\Category $children)
-    {
+    public function removeChildren(\Kendoctor\Bundle\DocumentorBundle\Entity\Category $children) {
         $this->children->removeElement($children);
     }
 
@@ -319,13 +314,20 @@ class Category
      *
      * @return \Doctrine\Common\Collections\Collection 
      */
-    public function getChildren()
-    {
+    public function getChildren() {
         return $this->children;
     }
-    
-    public function __toString()
-    {
-        return str_repeat("-", $this->lvl).$this->name;
+
+    public function getCreatedBy() {
+        return $this->createdBy;
     }
+
+    public function getUpdatedBy() {
+        return $this->updatedBy;
+    }
+
+    public function __toString() {
+        return str_repeat("-", $this->lvl) . $this->name;
+    }
+
 }

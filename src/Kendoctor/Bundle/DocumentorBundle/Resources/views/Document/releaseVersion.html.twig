@@ -1,0 +1,16 @@
+{% extends 'KendoctorDocumentorBundle:Space:spaceLayout.html.twig' %}
+
+{% block body -%}
+   
+    <h1>Document : {{ entity.title }}</h1>
+
+    <form action="{{ path('document_release_version', { 'versionId':entity.id }) }}" method="post" {{ form_enctype(form) }}>
+        {{ form_widget(form) }}
+
+        <p>
+            <button type="submit" class="btn btn-primary">Release</button>
+        </p>
+    </form>
+  
+            
+{% endblock %}

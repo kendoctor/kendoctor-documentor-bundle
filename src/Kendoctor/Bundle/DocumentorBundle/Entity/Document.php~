@@ -4,10 +4,13 @@ namespace Kendoctor\Bundle\DocumentorBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Kendoctor\Bundle\DocumentorBundle\Entity\Content;
+use Gedmo\Mapping\Annotation as Gedmo;
+use Kendoctor\Bundle\DocumentorBundle\Entity\DocumentVersion;
+
 
 /**
  * Document
- *
+ * @ORM\HasLifecycleCallbacks()
  * @ORM\Table()
  * @ORM\Entity
  */
@@ -19,4 +22,96 @@ class Document extends Content
      * @var type 
      */
     private $category;
+    
+    /**
+     * @ORM\OneToMany(targetEntity="DocumentReleasedVersion", mappedBy="document")
+     * 
+     * @var type
+     */
+    private $versions;
+
+    /**
+     * @ORM\OneToMany(targetEntity="DocumentVersion", mappedBy="document", cascade={"all"})
+     * 
+     * @var type
+     */
+    private $versionLogs;
+    
+    /**
+     * Set category
+     *
+     * @param \Kendoctor\Bundle\DocumentorBundle\Entity\UserDocumentCategory $category
+     * @return Document
+     */
+    public function setCategory(\Kendoctor\Bundle\DocumentorBundle\Entity\UserDocumentCategory $category = null)
+    {
+        $this->category = $category;
+    
+        return $this;
+    }
+
+    /**
+     * Get category
+     *
+     * @return \Kendoctor\Bundle\DocumentorBundle\Entity\UserDocumentCategory 
+     */
+    public function getCategory()
+    {
+        return $this->category;
+    }
+ 
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->versions = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
+
+    /**
+     * Add versions
+     *
+     * @param \Kendoctor\Bundle\DocumentorBundle\Entity\DocumentReleasedVersion $versions
+     * @return Document
+     */
+    public function addVersion(\Kendoctor\Bundle\DocumentorBundle\Entity\DocumentReleasedVersion $versions)
+    {
+        $this->versions[] = $versions;
+
+        return $this;
+    }
+
+    /**
+     * Remove versions
+     *
+     * @param \Kendoctor\Bundle\DocumentorBundle\Entity\DocumentReleasedVersion $versions
+     */
+    public function removeVersion(\Kendoctor\Bundle\DocumentorBundle\Entity\DocumentReleasedVersion $versions)
+    {
+        $this->versions->removeElement($versions);
+    }
+
+    /**
+     * Get versions
+     *
+     * @return \Doctrine\Common\Collections\Collection 
+     */
+    public function getVersions()
+    {
+        return $this->versions;
+    }
+    
+    /**
+     * @ORM\PostPersist
+     * @ORM\PostUpdate
+     */
+    public function logVersion()
+    {
+        $versionLog = new DocumentVersion();
+        $versionLog->setContent($this->getBody());
+        $versionLog->setTitle($this->getTitle());
+        $versionLog->setLang($this->getLocale());
+        
+    }
 }

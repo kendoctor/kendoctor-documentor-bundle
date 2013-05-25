@@ -6,5 +6,6 @@
        It's for jquery plugin: kendocumentor
 */
 
+body { padding-top: 150px; }
 .kdoc-selected { border:2px solid red; }
 .kdoc-element { cursor: pointer;}

@@ -1,0 +1,14 @@
+{% extends 'KendoctorDocumentorBundle:Space:spaceLayout.html.twig' %}
+
+{% block body -%}
+<h1>Document: {{ version.title }} [ {{ version.version }} ]</h1>
+
+    <form action="{{ path('document_select_translate_language', {'versionId': version.id }) }}" method="post" {{ form_enctype(form) }}>
+        {{ form_widget(form) }}
+
+        <p>
+            <button type="submit" class="btn btn-primary">Start Editing</button>
+        </p>
+    </form>
+            
+{% endblock %}

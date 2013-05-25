@@ -12,8 +12,10 @@ class DocumentEditingType extends AbstractType
     {
         $builder
             ->add('category')
-            ->add('title', 'hidden' )
+            ->add('title', 'hidden')
             ->add('body', 'hidden' )
+            ->add('locale','hidden')
+            ->add('currentVersionHash', 'hidden')
         ;
     }
 

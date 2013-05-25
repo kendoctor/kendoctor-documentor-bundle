@@ -4,12 +4,14 @@ namespace Kendoctor\Bundle\DocumentorBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
-
-
+use Kendoctor\Bundle\DocumentorBundle\Entity\ContentTranslation;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Content
+ * 
  * @Gedmo\SoftDeleteable(fieldName="deletedAt")
+ * @Gedmo\TranslationEntity(class="Kendoctor\Bundle\DocumentorBundle\Entity\ContentTranslation")
  * @ORM\Table()
  * @ORM\Entity
  * @ORM\InheritanceType("SINGLE_TABLE")
@@ -17,8 +19,8 @@ use Gedmo\Mapping\Annotation as Gedmo;
  * @ORM\DiscriminatorMap({"Content"="Content", "Document"="Document", "BookChapter"="BookChapter"})
  * @ORM\Entity(repositoryClass="Kendoctor\Bundle\DocumentorBundle\Entity\ContentRepository")
  */
-class Content
-{
+class Content {
+
     /**
      * @var integer
      *
@@ -30,19 +32,19 @@ class Content
 
     /**
      * @var string
-     *
+     * @Gedmo\Translatable
      * @ORM\Column(name="title", type="string", length=255)
      */
     private $title;
 
     /**
      * @var string
-     *
+     * @Gedmo\Translatable
      * @ORM\Column(name="body", type="text", nullable=true)
      */
     private $body;
 
-   /**
+    /**
      * @var datetime $createdAt
      *
      * @Gedmo\Timestampable(on="create")
@@ -57,21 +59,108 @@ class Content
      * @ORM\Column(type="datetime")
      */
     private $updatedAt;
-    
-    
-    
+
+    /**
+     * @var string $createdBy
+     *
+     * @Gedmo\Blameable(on="create")
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumn(name="created_by", referencedColumnName="id")
+     */
+    private $createdBy;
+
+    /**
+     * @var string $updatedBy
+     *
+     * @Gedmo\Blameable(on="update")
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumn(name="updated_by", referencedColumnName="id")
+     */
+    private $updatedBy;
+
     /**
      * @ORM\Column(name="deletedAt", type="datetime", nullable=true)
      */
     private $deletedAt;
-    
+
+    /**
+     * @ORM\OneToMany(
+     *   targetEntity="ContentTranslation",
+     *   mappedBy="object",
+     *   cascade={"persist", "remove"}
+     * )
+     */
+    private $translations;
+
+    /**
+     * @Gedmo\Locale
+     * 
+     * Used locale to override Translation listener`s locale
+     * this is not a mapped field of entity metadata, just a simple property
+     */
+    protected $locale;
+
+    /**
+     *
+     * @var type 
+     */
+    protected $version;
+
+    /**
+     * @ORM\Column(type="string", length=32)
+     * @var type 
+     */
+    protected $currentVersionHash;
+
+    public function __construct() {
+        $this->translations = new ArrayCollection();
+    }
+
+    public function getCurrentVersionHash() {
+        return $this->currentVersionHash;
+    }
+
+    public function setCurrentVersionHash($currentVersionHash) {
+        $this->currentVersionHash = $currentVersionHash;
+    }
+
+    public function getVersion() {
+        return $this->version;
+    }
+
+    public function setVersion($version) {
+        $this->version = $version;
+    }
+
+    public function getLocale() {
+        return $this->locale;
+    }
+
+    public function setLocale($locale) {
+        $this->locale = $locale;
+    }
+
+    public function setTranslatableLocale($locale) {
+        $this->locale = $locale;
+    }
+
+    public function getTranslations() {
+        return $this->translations;
+    }
+
+    public function addTranslation(ContentTranslation $t) {
+        if (!$this->translations->contains($t)) {
+            $this->translations[] = $t;
+            $t->setObject($this);
+        }
+    }
+
     /**
      * Get id
      *
      * @return integer 
      */
-    public function getId()
-    {
+    public function getId() {
         return $this->id;
     }
 
@@ -81,10 +170,9 @@ class Content
      * @param string $title
      * @return Content
      */
-    public function setTitle($title)
-    {
+    public function setTitle($title) {
         $this->title = $title;
-    
+
         return $this;
     }
 
@@ -93,8 +181,7 @@ class Content
      *
      * @return string 
      */
-    public function getTitle()
-    {
+    public function getTitle() {
         return $this->title;
     }
 
@@ -104,10 +191,9 @@ class Content
      * @param string $body
      * @return Content
      */
-    public function setBody($body)
-    {
+    public function setBody($body) {
         $this->body = $body;
-    
+
         return $this;
     }
 
@@ -116,8 +202,7 @@ class Content
      *
      * @return string 
      */
-    public function getBody()
-    {
+    public function getBody() {
         return $this->body;
     }
 
@@ -127,10 +212,9 @@ class Content
      * @param \DateTime $createdAt
      * @return Content
      */
-    public function setCreatedAt($createdAt)
-    {
+    public function setCreatedAt($createdAt) {
         $this->createdAt = $createdAt;
-    
+
         return $this;
     }
 
@@ -139,8 +223,7 @@ class Content
      *
      * @return \DateTime 
      */
-    public function getCreatedAt()
-    {
+    public function getCreatedAt() {
         return $this->createdAt;
     }
 
@@ -150,10 +233,9 @@ class Content
      * @param \DateTime $updatedAt
      * @return Content
      */
-    public function setUpdatedAt($updatedAt)
-    {
+    public function setUpdatedAt($updatedAt) {
         $this->updatedAt = $updatedAt;
-    
+
         return $this;
     }
 
@@ -162,8 +244,70 @@ class Content
      *
      * @return \DateTime 
      */
-    public function getUpdatedAt()
-    {
+    public function getUpdatedAt() {
         return $this->updatedAt;
     }
+
+    public function getCreatedBy() {
+        return $this->createdBy;
+    }
+
+    public function getUpdatedBy() {
+        return $this->updatedBy;
+    }
+
+    /**
+     * Set deletedAt
+     *
+     * @param \DateTime $deletedAt
+     * @return Content
+     */
+    public function setDeletedAt($deletedAt) {
+        $this->deletedAt = $deletedAt;
+
+        return $this;
+    }
+
+    /**
+     * Get deletedAt
+     *
+     * @return \DateTime 
+     */
+    public function getDeletedAt() {
+        return $this->deletedAt;
+    }
+
+    /**
+     * Set createdBy
+     *
+     * @param \Kendoctor\Bundle\DocumentorBundle\Entity\User $createdBy
+     * @return Content
+     */
+    public function setCreatedBy(\Kendoctor\Bundle\DocumentorBundle\Entity\User $createdBy = null) {
+        $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    /**
+     * Set updatedBy
+     *
+     * @param \Kendoctor\Bundle\DocumentorBundle\Entity\User $updatedBy
+     * @return Content
+     */
+    public function setUpdatedBy(\Kendoctor\Bundle\DocumentorBundle\Entity\User $updatedBy = null) {
+        $this->updatedBy = $updatedBy;
+
+        return $this;
+    }
+
+    /**
+     * Remove translations
+     *
+     * @param \Kendoctor\Bundle\DocumentorBundle\Entity\ContentTranslation $translations
+     */
+    public function removeTranslation(\Kendoctor\Bundle\DocumentorBundle\Entity\ContentTranslation $translations) {
+        $this->translations->removeElement($translations);
+    }
+
 }

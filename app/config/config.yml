@@ -4,7 +4,7 @@ imports:
 
 framework:
     #esi:             ~
-    #translator:      { fallback: %locale% }
+    translator:      { fallback: %locale% }
     secret:          %secret%
     router:
         resource: "%kernel.root_dir%/config/routing.yml"
@@ -58,6 +58,13 @@ doctrine:
         entity_managers:
             default:
                 auto_mapping: true
+                mappings:
+                    gedmo_loggable:
+                        type: annotation
+                        prefix: Gedmo\Loggable\Entity
+                        dir: "%kernel.root_dir%/../vendor/gedmo/doctrine-extensions/lib/Gedmo/Loggable/Entity"
+                        alias: GedmoLoggable # this one is optional and will default to the name set for the mapping
+                        is_bundle: false
                 filters:
                     softdeleteable:
                         class: Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter
@@ -79,3 +86,19 @@ stof_doctrine_extensions:
             timestampable: true
             tree: true
             softdeleteable : true
+            blameable : true
+            translatable: true
+            loggable : true
+            sluggable: true
+            
+            
+fos_user:
+    db_driver: orm # other valid values are 'mongodb', 'couchdb' and 'propel'
+    firewall_name: main
+    user_class: Kendoctor\Bundle\DocumentorBundle\Entity\User           
+    
+services:  
+    kendoctor.versionable.subscriber:
+        class: Kendoctor\Bundle\DocumentorBundle\Versionable\DocumentVersionableSubscriber
+        tags:
+            - { name: doctrine.event_subscriber, connection: default }

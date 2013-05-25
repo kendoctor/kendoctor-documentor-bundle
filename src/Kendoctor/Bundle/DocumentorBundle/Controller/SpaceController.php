@@ -9,7 +9,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 class SpaceController extends Controller
 {
     /**
-     * @Route("/space")
+     * @Route("/space", name="my_space")
      * @Template()
      */
     public function indexAction()

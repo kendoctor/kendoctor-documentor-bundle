@@ -21,7 +21,7 @@ class AppKernel extends Kernel
             new JMS\SecurityExtraBundle\JMSSecurityExtraBundle(),
             new Kendoctor\Bundle\DocumentorBundle\KendoctorDocumentorBundle(),
             
-            
+            new FOS\UserBundle\FOSUserBundle(),
             new Stof\DoctrineExtensionsBundle\StofDoctrineExtensionsBundle(),
         );
 
