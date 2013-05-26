@@ -13,7 +13,6 @@ class DocumentType extends AbstractType
         $builder
             ->add('category')
             ->add('title')   
-            ->add('version')
             ->add('locale', 'language')
         ;
     }

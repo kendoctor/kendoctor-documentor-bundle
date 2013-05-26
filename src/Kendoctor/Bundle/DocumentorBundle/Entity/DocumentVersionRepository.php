@@ -12,6 +12,66 @@ use Doctrine\ORM\EntityRepository;
  */
 class DocumentVersionRepository extends EntityRepository {
 
+    public function getById($id) {
+        $query = $this->_em->createQuery("
+            SELECT v, d, vl
+            FROM KendoctorDocumentorBundle:DocumentVersion v
+            JOIN v.document d
+            LEFT JOIN d.versionLogs vl WITH vl.lang = v.lang
+            WHERE v.id = :id
+            ")->setParameter("id", $id)
+        ;
+
+        return $query->getOneOrNullResult();
+    }
+
+    public function getLatestByLangAndDocumentId($documentId, $lang) {
+        $query = $this->_em->createQuery("
+            SELECT v, d, vl
+            FROM KendoctorDocumentorBundle:DocumentVersion v
+            JOIN v.document d
+            LEFT JOIN d.versionLogs vl WITH vl.lang = v.lang
+            WHERE d.id = :documentId AND v.lang = :lang
+            ORDER BY v.createdAt DESC
+            ")->setParameter("documentId", $documentId)
+                ->setParameter("lang", $lang)
+                ->setMaxResults(1)
+        ;
+
+        return $query->getOneOrNullResult();
+    }
+
+    public function getAvailableLangsOfDocument($documentId) {
+        $query = $this->_em->createQuery("
+            SELECT DISTINCT(v.lang) AS lang
+            FROM KendoctorDocumentorBundle:DocumentVersion v
+            JOIN v.document d
+            WHERE d.id = :documentId 
+            ORDER BY v.lang ASC
+            ")->setParameter("documentId", $documentId)
+        ;
+        return $query->getScalarResult();
+    }
+
+    public function getTheSameVersionForLang($version, $lang) {
+
+        $query = $this->_em->createQuery("
+            SELECT v
+            FROM KendoctorDocumentorBundle:DocumentVersion v
+            JOIN v.document d
+            LEFT JOIN d.translations t
+            WHERE d.id = :documentId AND v.version = :version AND v.lang = :lang
+            ")->setParameter("documentId", $version->getDocument()->getId())
+                ->setParameter("version", $version->getVersion())
+                ->setParameter("lang", $lang)
+        ;
+
+//echo $query->getSQL();exit;
+        // $query->setHint(\Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE, $lang);
+        return $query->getOneOrNullResult();
+    }
+
+    // to remove
     public function getVersionByDocumentHash($hash) {
 
         $query = $this->_em->createQuery("
@@ -38,22 +98,4 @@ class DocumentVersionRepository extends EntityRepository {
         return $query->getOneOrNullResult();
     }
 
-    public function getVersionOfDocumentForLang($version, $lang)
-    {
-    
-        $query = $this->_em->createQuery("
-            SELECT v
-            FROM KendoctorDocumentorBundle:DocumentVersion v
-            JOIN v.document d
-            LEFT JOIN d.translations t
-            WHERE d.id = :documentId AND v.version = :version AND v.lang = :lang
-            ")->setParameter("documentId", $version->getDocument()->getId())
-                ->setParameter("version", $version->getVersion())
-                ->setParameter("lang", $lang)
-        ;
-        
-//echo $query->getSQL();exit;
-      // $query->setHint(\Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE, $lang);
-        return $query->getOneOrNullResult();
-    }
 }

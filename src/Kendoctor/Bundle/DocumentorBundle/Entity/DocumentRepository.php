@@ -12,6 +12,39 @@ use Doctrine\ORM\EntityRepository;
  */
 class DocumentRepository extends EntityRepository {
 
+    public function getLastestVersion()
+    {
+        
+    }
+    
+    public function getWithVersionLogsByVersion($versionId)
+    {
+        $query = $this->_em->createQuery("
+            SELECT d, vl
+            FROM KendoctorDocumentorBundle:Document d
+            LEFT JOIN d.versionLogs vl       
+            LEFT JOIN d.versionLogs vl2 with vl2.id = :versionId
+            WHERE vl.document = d.id AND vl.id = :versionId
+            ")->setParameter("versionId", $versionId);
+        $entity =  $query->getOneOrNullResult();
+        if($entity) 
+        {
+           
+        }
+            return null;
+    }
+    
+    public function getByVersion($versionId)
+    {
+        $query = $this->_em->createQuery("
+            SELECT d
+            FROM KendoctorDocumentorBundle:Document d
+            LEFT JOIN d.versionLogs vl       
+            WHERE vl.document = d.id AND vl.id = :versionId
+            ")->setParameter("versionId", $versionId);
+        return $query->getOneOrNullResult();
+    }
+    
     public function getLanguagesOfDocument($id) {
         $query = $this->_em->createQuery("
             SELECT DISTINCT(ct.locale) AS lang

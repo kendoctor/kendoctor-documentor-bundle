@@ -2,77 +2,78 @@
 
 {% block body -%}
 
-<h1>Current Version: {{version.version}}, {{ currentLang }}</h1>
+<h1>Current Version: {{version.version}}, {{ version.lang }}</h1>
 
 <div class="container-fluid">
-  
-    
-    <div class="span10">
+
+
+    <div class="span9">
         <p>
         {% for lang in langs %}
 
-                <a class="btn {% if currentLang == lang.lang %} btn-inverse {% endif %}" href="">{{ lang.lang }}</a> 
+                <a class="btn {% if version.lang == lang.lang %} btn-inverse {% endif %}" href="">{{ lang.lang }}</a> 
         {% endfor %}
             </p>
             <p>
         {% for log in entity.versionLogs %}
             {% if log.isReleased %}
-                    <a class="btn {%if log.id == version.id %} btn-primary {% elseif log.isReleased %} btn-info {% endif %}" href="{{ path('document_edit', {'versionId' : log.id }) }}">{{ log.version }}</a> 
+                    <a class="btn {%if log.id == version.id %} btn-primary {% elseif log.isReleased %} btn-info {% endif %}" href="{{ path('document_edit', { 'id' : entity.id ,'version' : log.id }) }}">{{ log.version }}</a> 
             {% endif %}            
         {% endfor %}
 
                 </p>
-                
-                
-                <form class="document-form" action="{{ path('document_update', { 'id': entity.id }) }}" method="post" {{ form_enctype(edit_form) }}>
-                <input type="hidden" name="_method" value="PUT" />
-        {{ form_widget(edit_form) }}
-                <div id="doc"></div>
-                <p>
-                    <button type="submit" class="btn">Save Document</button>
-            {% if version.isReleased %}
-                    <a class="disabled btn">Release a new Version</a>
-            {% else %}
-                    
-            {% endif %}
-                    <a class="btn" href={{ path('document_select_translate_language', {'versionId': version.id }) }}>Translate Document</a>
-                    <button type="submit" class="btn btn-danger">Delete</button>
 
-                </p>
-            </form>
+
+                <form class="document-form" action="{{ path('document_update', { 'id': entity.id, 'version':version.id }) }}" method="post" {{ form_enctype(edit_form) }}>
+                    <input type="hidden" name="_method" value="PUT" />
+        {{ form_widget(edit_form) }}
+                    <div id="doc"></div>
+                    <p>
+                        <button type="submit" class="btn">Save Document</button>
+            {% if version.isReleased %}
+                        <a class="disabled btn">Release Version</a>
+            {% else %}
+                        <a class="btn" href={{ path('document_release_version', {'versionId': version.id }) }}>Release Version</a>
+            {% endif %}
+                       
+                        <a class="btn" href={{ path('document_select_translate_language', {'versionId': version.id }) }}>Translate Document</a>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+
+                    </p>
+                </form>
             </div>
 
-     
-         <div class="span2 pull-right">
-            <h4>History<i>(you can only have 5 history records)</i></h4>
-            <ol class="nav nav-list">
-               
+
+            <div class="span3 pull-right">
+                <h4>History<i>(you can only have 5 history records)</i></h4>
+                <ol class="nav nav-list">
+
             {% for log in entity.versionLogs %}
-                    
+
 {% if not log.isReleased %}
-             <li>       
-               <p>  <a class="  {%if log.id == version.id %}  {% endif %}" href="{{ path('document_edit', {'versionId' : log.id }) }}">{{ log.version }}</a> 
-                 <a href="{{ path('document_release_version', { versionId: log.id }) }}" class="">Release</a>
-                 <a href="{{ path('document_release_version', { versionId: log.id }) }}" class="" title="Delete this history"><i class="icon-remove-circle"></i></a></p>
-             </li>
+                    <li>     <p>  
+                            [{{ log.createdAt | date("y/m/d h:i:s") }}]<a href="{{ path('document_edit', { 'id': entity.id, version: log.id }) }}" class="">{{ log.version }}</a>
+                            <a href="{{ path('document_release_version', { versionId: log.id }) }}" class="">Revert</a>
+                            <a href="{{ path('document_release_version', { versionId: log.id }) }}" class="" title="Delete this history"><i class="icon-remove-circle"></i></a></p>
+                    </li>
  {% endif %}              {% endfor %}
                 </ol>
             </div>
-</div>
-
-            
+        </div>
 
 
 
-            <script>
-                $(function() {
 
-                    $("#doc").kendocumentor({
-                        titleFieldSelector: '#kendoctor_bundle_documentorbundle_documenttype_title',
-                        bodyFieldSelector: '#kendoctor_bundle_documentorbundle_documenttype_body',
-                        formSelector: '.document-form'
-                    });
+
+        <script>
+            $(function() {
+
+                $("#doc").kendocumentor({
+                    titleFieldSelector: '#kendoctor_bundle_documentorbundle_documenttype_title',
+                    bodyFieldSelector: '#kendoctor_bundle_documentorbundle_documenttype_body',
+                    formSelector: '.document-form'
                 });
-                </script>
+            });
+            </script>
 
 {% endblock %}

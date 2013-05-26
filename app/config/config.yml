@@ -97,8 +97,8 @@ fos_user:
     firewall_name: main
     user_class: Kendoctor\Bundle\DocumentorBundle\Entity\User           
     
-services:  
-    kendoctor.versionable.subscriber:
-        class: Kendoctor\Bundle\DocumentorBundle\Versionable\DocumentVersionableSubscriber
-        tags:
-            - { name: doctrine.event_subscriber, connection: default }
+#services:  
+#    kendoctor.versionable.subscriber:
+#        class: Kendoctor\Bundle\DocumentorBundle\Versionable\DocumentVersionableSubscriber
+#        tags:
+#            - { name: doctrine.event_subscriber, connection: default }

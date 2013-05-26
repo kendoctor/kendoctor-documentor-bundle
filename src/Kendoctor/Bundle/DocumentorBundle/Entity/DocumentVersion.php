@@ -25,12 +25,6 @@ class DocumentVersion {
  
     
     /**
-     * @ORM\Column(type="string", length=32)
-     * @var type 
-     */
-    private $documentHash;
-    
-    /**
      * @var string
      *
      * @ORM\Column(name="version", type="string", length=10)
@@ -92,6 +86,7 @@ class DocumentVersion {
 
     public function __construct() {
         $this->versionSlug = $this->version = md5(uniqid(rand(), true));
+        $this->createdAt = new \DateTime();
         $this->isReleased = false;
     }
 
@@ -296,5 +291,14 @@ class DocumentVersion {
     public function getDocumentHash()
     {
         return $this->documentHash;
+    }
+    
+    public function getDocumentInVersion()
+    {
+        $document = $this->getDocument();
+        $document->setBody($this->content);
+        $document->setTitle($this->title);
+        $document->setLocale($this->lang);
+        return $document;
     }
 }

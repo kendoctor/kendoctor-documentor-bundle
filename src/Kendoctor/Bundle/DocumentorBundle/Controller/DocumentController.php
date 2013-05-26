@@ -11,6 +11,7 @@ use Kendoctor\Bundle\DocumentorBundle\Entity\Document;
 use Kendoctor\Bundle\DocumentorBundle\Form\DocumentType;
 use Kendoctor\Bundle\DocumentorBundle\Form\DocumentEditingType;
 use Kendoctor\Bundle\DocumentorBundle\Form\DocumentVersionType;
+use Kendoctor\Bundle\DocumentorBundle\Entity\DocumentVersion;
 
 /**
  * Document controller.
@@ -18,6 +19,35 @@ use Kendoctor\Bundle\DocumentorBundle\Form\DocumentVersionType;
  * @Route("/document")
  */
 class DocumentController extends Controller {
+
+    public function logNewVersion(Document $document, $em, DocumentVersion $oldVersion = null, $forceReleased = false) {
+        $version = new DocumentVersion();
+        $version->setDocument($document);
+        $version->setContent($document->getBody());
+        $version->setLang($document->getLocale());
+        $version->setTitle($document->getTitle());
+        $version->setCreatedAt(new \DateTime());
+
+        if ($oldVersion && $oldVersion->getIsReleased()) {
+            $versionNo = $version->getVersion();
+            $version->setVersion($oldVersion->getVersion());
+            $version->setIsReleased(true);
+            $oldVersion->setIsReleased(false);
+            $oldVersion->setVersion($versionNo);
+
+            $em->persist($oldVersion);
+        } else {
+            $version->setIsReleased($forceReleased);
+            if($document->getVersion()) {
+                $version->setVersion($document->getVersion());
+            }
+        }
+
+        $em->persist($version);
+        $em->flush();
+
+        return $version;
+    }
 
     /**
      * Lists all Document entities.
@@ -44,6 +74,7 @@ class DocumentController extends Controller {
      * @Template("KendoctorDocumentorBundle:Document:new.html.twig")
      */
     public function createAction(Request $request) {
+
         $entity = new Document();
         $form = $this->createForm(new DocumentType(), $entity);
         $form->bind($request);
@@ -54,12 +85,13 @@ class DocumentController extends Controller {
             $em->flush();
 
             $session = $this->container->get('session');
+            //set current document language
             $session->set('current_document_lang', $entity->getLocale());
-            
-            $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
-                    ->getVersionByDocumentHash($entity->getCurrentVersionHash());
 
-            return $this->redirect($this->generateUrl('document_edit', array('versionId' => $version->getId())));
+            //log a new version for document
+            $version = $this->logNewVersion($entity, $em);
+
+            return $this->redirect($this->generateUrl('document_edit', array('id' => $entity->getId())));
         }
 
         return array(
@@ -134,11 +166,11 @@ class DocumentController extends Controller {
     /**
      * Displays a form to edit an existing Document entity.
      *
-     * @Route("/{versionId}/edit", name="document_edit")
+     * @Route("/{id}-{version}/edit", name="document_edit", defaults={"version"="latest"})
      * @Method("GET")
      * @Template()
      */
-    public function editAction(Request $request, $versionId) {
+    public function editAction(Request $request, $id, $version) {
 
 
         $em = $this->getDoctrine()->getManager();
@@ -146,42 +178,28 @@ class DocumentController extends Controller {
         $session = $this->container->get('session');
         $currentLang = $session->get('current_document_lang', $request->getLocale());
 
-        $dql = "SELECT v, d, vl FROM 
-            KendoctorDocumentorBundle:DocumentVersion v 
-            JOIN v.document d
-            LEFT JOIN d.versionLogs vl WITH vl.lang = :lang
-            WHERE v.id = :id
-            ";
+        if ($version == "latest") {
+            $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                    ->getLatestByLangAndDocumentId($id, $currentLang);
+        } else {
+            $version = $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                    ->getById($version);
+        }
 
-        $version = $em->createQuery($dql)
-                ->setParameter("id", $versionId)
-                ->setParameter('lang', $currentLang)
-                ->getSingleResult();
+        if ($version === null) {
+            throw $this->createNotFoundException('Unable to find Document entity.');
+        }
+        // if version got by id need reset lang
+        $currentLang = $version->getLang();
+        $session->set('current_document_lang', $currentLang);
 
-        
-        $entity = $version->getDocument();
-        $entity->setLocale($currentLang);
+        $entity = $version->getDocumentInVersion();
 
-        $langs = $em->getRepository("KendoctorDocumentorBundle:Document")->getLanguagesOfDocument($entity->getId());
-
-        // $repository = $em->getRepository('Gedmo\Translatable\Entity\Translation');
-        // $translations = $repository->findTranslations($entity);
-        // print_r($translations);
-        //revert version info
-        $entity->setTitle($version->getTitle());
-        $entity->setBody($version->getContent());
-        $entity->setCurrentVersionHash($version->getDocumentHash());
-
-
-        //   $entity = $em->getRepository('KendoctorDocumentorBundle:Document')->find($id);
+        $langs = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")->getAvailableLangsOfDocument($entity->getId());
 
         if (!$entity) {
             throw $this->createNotFoundException('Unable to find Document entity.');
         }
-
-        //   $repo = $em->getRepository('Gedmo\Loggable\Entity\LogEntry');
-        //     $logs = $repo->getLogEntries($entity);
-        $versionLogs = $entity->getVersionLogs();
 
 
         //pass logentry version to template
@@ -194,7 +212,6 @@ class DocumentController extends Controller {
             'entity' => $entity,
             'version' => $version,
             'langs' => $langs,
-            'currentLang' => $currentLang,
             'edit_form' => $editForm->createView(),
             'delete_form' => $deleteForm->createView(),
         );
@@ -203,18 +220,21 @@ class DocumentController extends Controller {
     /**
      * Edits an existing Document entity.
      *
-     * @Route("/{id}", name="document_update")
+     * @Route("/{id}-{version}", name="document_update")
      * @Method("PUT")
      * @Template("KendoctorDocumentorBundle:Document:edit.html.twig")
      */
-    public function updateAction(Request $request, $id) {
+    public function updateAction(Request $request, $id, $version) {
         $em = $this->getDoctrine()->getManager();
 
-        $entity = $em->getRepository('KendoctorDocumentorBundle:Document')->find($id);
+        $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                ->getById($version);
 
-        if (!$entity) {
+        if (!$version) {
             throw $this->createNotFoundException('Unable to find Document entity.');
         }
+
+        $entity = $version->getDocumentInVersion();
 
         $deleteForm = $this->createDeleteForm($id);
         $editForm = $this->createForm(new DocumentEditingType(), $entity);
@@ -225,14 +245,17 @@ class DocumentController extends Controller {
             $em->persist($entity);
             $em->flush();
 
-            $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
-                    ->getVersionByDocumentHash($entity->getCurrentVersionHash());
+            $newVersion = $this->logNewVersion($entity, $em, $version);
 
-            return $this->redirect($this->generateUrl('document_edit', array('versionId' => $version->getId())));
+            return $this->redirect($this->generateUrl('document_edit', array('id' => $entity->getId(), 'version' => $newVersion->getId())));
         }
+
+        $langs = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")->getAvailableLangsOfDocument($entity->getId());
 
         return array(
             'entity' => $entity,
+            'version' => $version,
+            'langs' => $langs,
             'edit_form' => $editForm->createView(),
             'delete_form' => $deleteForm->createView(),
         );
@@ -286,15 +309,8 @@ class DocumentController extends Controller {
     public function releaseVersionAction(Request $request, $versionId) {
         $em = $this->getDoctrine()->getManager();
 
-        $dql = "SELECT v FROM 
-            KendoctorDocumentorBundle:DocumentVersion v 
-          
-            WHERE v.id = :id
-            ";
-
-        $entity = $em->createQuery($dql)
-                ->setParameter("id", $versionId)
-                ->getSingleResult();
+        $entity = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                ->getById($versionId);
 
         if (!$entity) {
             throw $this->createNotFoundException('Unable to find Document entity.');
@@ -310,12 +326,11 @@ class DocumentController extends Controller {
                 $entity->setIsReleased(true);
                 $em->persist($entity);
                 $em->flush();
-                return $this->redirect($this->generateUrl('document_edit', array('versionId' => $entity->getId())));
+                return $this->redirect($this->generateUrl('document_edit', array('id' => $entity->getDocument()->getId(), 'version' => $entity->getId())));
             }
         }
         return array(
             'entity' => $entity,
-            'versionNo' => $request->query->get('versionNo'),
             'form' => $form->createView()
         );
     }
@@ -333,32 +348,38 @@ class DocumentController extends Controller {
                 ->add('locale', 'language')
                 ->getForm();
 
-        $version = $em->getRepository('KendoctorDocumentorBundle:DocumentVersion')->find($versionId);
-         //       getVersionOfDocumentWithLang($versionId, 'en');
+        $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                ->getById($versionId);
 
         if ($request->getMethod() == 'POST') {
             $form->bind($request);
             if ($form->isValid()) {
                 $data = $form->getData();
+                if($data['locale'] == $version->getLang())
+                {
+                     return $this->redirect($this->generateUrl('document_edit', array(
+                                    'id' => $version->getDocument()->getId(),
+                                    'version' => $version->getId()
+                    )));
+                }
                 $session = $this->container->get('session');
                 $session->set('current_document_lang', $data['locale']);
-             
-                $versionForLang = $em->getRepository('KendoctorDocumentorBundle:DocumentVersion')->getVersionOfDocumentForLang($version, $data['locale']);
-                if($versionForLang == null)
-                {
-                    $document = $version->getDocument();
+
+                $theSameVersion = $em->getRepository('KendoctorDocumentorBundle:DocumentVersion')->getTheSameVersionForLang($version, $data['locale']);
+                if ($theSameVersion == null) {
+                    $document = $version->getDocumentInVersion();
                     $document->setLocale($data['locale']);
                     $document->setVersion($version->getVersion());
                     $em->persist($document);
                     $em->flush();
-                    
-                    $versionForLang = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
-                        ->getVersionByDocumentHash($document->getCurrentVersionHash());
+                    $theSameVersion = $this->logNewVersion($document, $em, null, true);
                 }
-                
-               // \Doctrine\Common\Util\Debug::dump($versionForLang);
-              
-                return $this->redirect($this->generateUrl('document_edit', array('versionId' => $versionForLang->getId()
+
+                // \Doctrine\Common\Util\Debug::dump($versionForLang);
+
+                return $this->redirect($this->generateUrl('document_edit', array(
+                                    'id' => $theSameVersion->getDocument()->getId(),
+                                    'version' => $theSameVersion->getId()
                 )));
             }
         }
