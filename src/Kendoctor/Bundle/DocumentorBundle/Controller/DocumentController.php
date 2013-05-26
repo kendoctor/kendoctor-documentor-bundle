@@ -38,7 +38,7 @@ class DocumentController extends Controller {
             $em->persist($oldVersion);
         } else {
             $version->setIsReleased($forceReleased);
-            if($document->getVersion()) {
+            if ($document->getVersion()) {
                 $version->setVersion($document->getVersion());
             }
         }
@@ -181,6 +181,8 @@ class DocumentController extends Controller {
         if ($version == "latest") {
             $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
                     ->getLatestByLangAndDocumentId($id, $currentLang);
+            $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                    ->getById($version->getId());
         } else {
             $version = $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
                     ->getById($version);
@@ -336,6 +338,38 @@ class DocumentController extends Controller {
     }
 
     /**
+     * If the selected language version does not exisist, create it
+     * 
+     * @param type $versionId
+     * @Route("/change-version-language/{versionId}-{lang}/", name="document_change_version_language")
+     */
+    public function changeVersionLanguageAction(Request $request, $lang, $versionId) {
+        $em = $this->getDoctrine()->getManager();
+        $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                ->getById($versionId);
+        if (!$version) {
+            throw $this->createNotFoundException('Unable to find Document entity.');
+        }
+
+        $em = $this->getDoctrine()->getManager();
+        $theSameVersion = $em->getRepository('KendoctorDocumentorBundle:DocumentVersion')->getTheSameVersionForLang($version, $lang);
+        if ($theSameVersion == null) {
+            $document = $version->getDocumentInVersion();
+            $document->setLocale($lang);
+            $document->setVersion($version->getVersion());
+            $em->persist($document);
+            $em->flush();
+            $theSameVersion = $this->logNewVersion($document, $em, null, $version->getIsReleased());
+        }
+        $session = $this->container->get('session');
+        $session->set('current_document_lang', $lang);
+        return $this->redirect($this->generateUrl('document_edit', array(
+                            'id' => $theSameVersion->getDocument()->getId(),
+                            'version' => $theSameVersion->getId()
+        )));
+    }
+
+    /**
      * Deletes a Document entity.
      *
      * @Route("/select-translate-language/{versionId}", name="document_select_translate_language")
@@ -355,11 +389,10 @@ class DocumentController extends Controller {
             $form->bind($request);
             if ($form->isValid()) {
                 $data = $form->getData();
-                if($data['locale'] == $version->getLang())
-                {
-                     return $this->redirect($this->generateUrl('document_edit', array(
-                                    'id' => $version->getDocument()->getId(),
-                                    'version' => $version->getId()
+                if ($data['locale'] == $version->getLang()) {
+                    return $this->redirect($this->generateUrl('document_edit', array(
+                                        'id' => $version->getDocument()->getId(),
+                                        'version' => $version->getId()
                     )));
                 }
                 $session = $this->container->get('session');
@@ -372,7 +405,7 @@ class DocumentController extends Controller {
                     $document->setVersion($version->getVersion());
                     $em->persist($document);
                     $em->flush();
-                    $theSameVersion = $this->logNewVersion($document, $em, null, true);
+                    $theSameVersion = $this->logNewVersion($document, $em, null, $version->getIsReleased());
                 }
 
                 // \Doctrine\Common\Util\Debug::dump($versionForLang);
@@ -389,6 +422,28 @@ class DocumentController extends Controller {
             'version' => $version,
             'form' => $form->createView()
         );
+    }
+
+    
+    /**
+     * Deletes a Document version entity.
+     *
+     * @Route("/delete-version/{versionId}", name="document_delete_version")
+     * @Template()
+     */
+    public function deleteVersionAction($versionId) {
+        $em = $this->getDoctrine()->getManager();
+        $version = $em->getRepository("KendoctorDocumentorBundle:DocumentVersion")
+                ->getById($versionId);
+        if (!$version) {
+            throw $this->createNotFoundException('Unable to find Document entity.');
+        }
+        $document = $version->getDocumentInVersion();
+        $em->remove($version);
+        $em->flush();
+        return $this->redirect($this->generateUrl('document_edit', array(
+                            'id' => $document->getId()
+        )));
     }
 
 }

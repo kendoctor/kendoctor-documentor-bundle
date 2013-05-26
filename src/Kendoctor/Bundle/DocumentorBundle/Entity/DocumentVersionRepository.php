@@ -4,6 +4,7 @@ namespace Kendoctor\Bundle\DocumentorBundle\Entity;
 
 use Doctrine\ORM\EntityRepository;
 
+
 /**
  * DocumentVersionRepository
  *
@@ -14,12 +15,15 @@ class DocumentVersionRepository extends EntityRepository {
 
     public function getById($id) {
         $query = $this->_em->createQuery("
-            SELECT v, d, vl
+            SELECT v, d, vl, vl2
             FROM KendoctorDocumentorBundle:DocumentVersion v
             JOIN v.document d
-            LEFT JOIN d.versionLogs vl WITH vl.lang = v.lang
+            LEFT JOIN d.versionLogs vl WITH vl.lang = v.lang AND vl.isReleased = true
+            LEFT JOIN d.versionLogs vl2 WITH vl2.lang = v.lang AND vl2.isReleased = false
             WHERE v.id = :id
-            ")->setParameter("id", $id)
+            ORDER BY vl.version ASC, vl2.createdAt ASC
+            ")
+                ->setParameter("id", $id)
         ;
 
         return $query->getOneOrNullResult();
@@ -27,10 +31,9 @@ class DocumentVersionRepository extends EntityRepository {
 
     public function getLatestByLangAndDocumentId($documentId, $lang) {
         $query = $this->_em->createQuery("
-            SELECT v, d, vl
+            SELECT v
             FROM KendoctorDocumentorBundle:DocumentVersion v
             JOIN v.document d
-            LEFT JOIN d.versionLogs vl WITH vl.lang = v.lang
             WHERE d.id = :documentId AND v.lang = :lang
             ORDER BY v.createdAt DESC
             ")->setParameter("documentId", $documentId)
@@ -97,5 +100,7 @@ class DocumentVersionRepository extends EntityRepository {
         //  $query->setHint(Gedmo\TranslationListener::HINT_TRANSLATABLE_LOCALE, $lang);
         return $query->getOneOrNullResult();
     }
+    
+   
 
 }

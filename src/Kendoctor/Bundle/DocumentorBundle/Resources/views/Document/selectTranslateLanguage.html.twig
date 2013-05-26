@@ -3,7 +3,7 @@
 {% block body -%}
 <h1>Document: {{ version.title }} [ {{ version.version }} ]</h1>
 
-    <form action="{{ path('document_select_translate_language', {'versionId': version.id }) }}" method="post" {{ form_enctype(form) }}>
+    <form action="{{ path('document_select_translate_language', {'versionId': version.id }) }}" method="post" >
         {{ form_widget(form) }}
 
         <p>

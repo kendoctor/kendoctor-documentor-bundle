@@ -11,7 +11,7 @@
         <p>
         {% for lang in langs %}
 
-                <a class="btn {% if version.lang == lang.lang %} btn-inverse {% endif %}" href="">{{ lang.lang }}</a> 
+                <a class="btn {% if version.lang == lang.lang %} btn-inverse {% endif %}" href="{{ path('document_change_version_language', { 'versionId': version.id, 'lang':lang.lang } ) }}">{{ lang.lang }}</a> 
         {% endfor %}
             </p>
             <p>
@@ -54,7 +54,7 @@
                     <li>     <p>  
                             [{{ log.createdAt | date("y/m/d h:i:s") }}]<a href="{{ path('document_edit', { 'id': entity.id, version: log.id }) }}" class="">{{ log.version }}</a>
                             <a href="{{ path('document_release_version', { versionId: log.id }) }}" class="">Revert</a>
-                            <a href="{{ path('document_release_version', { versionId: log.id }) }}" class="" title="Delete this history"><i class="icon-remove-circle"></i></a></p>
+                            <a href="{{ path('document_delete_version', { versionId: log.id }) }}" class="" title="Delete this history"><i class="icon-remove-circle"></i></a></p>
                     </li>
  {% endif %}              {% endfor %}
                 </ol>
